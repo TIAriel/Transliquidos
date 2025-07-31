@@ -78,7 +78,7 @@
       <field name="model">project.task</field>
       <field name="inherit_id" ref="industry_fsm.project_task_view_list_fsm"/>
       <field name="arch" type="xml">
-        <xpath expr="//tree" position="attributes">
+        <xpath expr="//list" position="attributes">
         <attribute name="default_order">id desc</attribute>
       </xpath>
         <!--campos ocultos de la vista task-->
