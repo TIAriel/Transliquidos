@@ -1,0 +1,249 @@
+from email.policy import default
+from unittest.mock import DEFAULT
+from odoo import fields, models, api
+class servicio_externo_proyecto (models.Model):
+    _inherit = ['project.task']
+    allow_timesheets=fields.Boolean(
+        default = False,
+    )   
+    estatus_viaje = fields.Selection([
+        ('1','Programado'),
+        ('2','Pendiente de gastos'),
+        ('3','Pendiente de diesel'),
+        ('4','Pendiente de carta porte'),
+        ('5','En trayecto'),
+        ('6','En validación'),
+        ('7','Por facturar'),
+        ('8','Por cobrar'),
+        ('9','Finalizado'),
+        ('10','Cancelado'),
+        ('12','Rechazado'),],
+        string="Estatus de Viaje",
+        default='1',
+    )
+    vehiculo = fields.Many2one(
+        comodel_name='fleet.vehicle',
+        ondelete='set null',
+        index=True,
+        string="Vehiculo",
+    )
+    anio_vehiculo = fields.Char(
+        related ='vehiculo.model_year',
+        string="Año vehículo",
+    )
+    remolque_1 = fields.Many2one(
+        comodel_name ='fleet.vehicle',
+        ondelete ='set null',
+        index=True,
+        string="Remolque 1",
+    )
+    r1_no_economico = fields.Char(
+        related ='remolque_1.no_economico',
+        string="No. Economico r1",
+    )
+    remolque_2 = fields.Many2one(
+        comodel_name ='fleet.vehicle',
+        ondelete ='set null',
+        index=True,
+        string="Remolque 2",
+    )
+    r2_no_economico = fields.Char(
+        related ='remolque_2.no_economico',
+        string="No. Economico r2",
+    )
+    tipo_ruta_viaje= fields.Selection(
+       related = 'project_id.tipo_precio',
+        string ="Tipo Ruta",
+    )
+    carga_viaje= fields.Selection(
+        related = 'project_id.carga_ruta',
+        string ="Carga",
+    )
+    capacidad_viaje = fields.Selection(
+        related ='project_id.capacidad_ruta',
+        string ="Capacidad",
+    )
+    producto_viaje = fields.Many2one(
+        related ='project_id.producto_ruta',
+        string ="Producto",
+    )
+    conductor = fields.Many2one(
+        related ='vehiculo.conductor',
+        string ="Conductor",
+        store=True,
+    )
+    # gasto_total_op_viaje= fields.Float(
+    #     related ='project_id.gasto_total_operador',
+    #     string ="Gastos del operador",
+    #     store=True,
+    # )
+
+    #gasto_total_caseta_viaje= fields.Float(
+    #    related ='project_id.caseta_efectivo',
+    #    string ="Gasto total - caseta",
+    #)
+    gasto_total_caseta_viaje= fields.Float(
+        compute ='_compute_gasto_total_caseta_viaje',
+        string ="Gasto total - caseta",
+    )   
+    diesel_viaje= fields.Float(
+        related ='project_id.diesel',
+        string ="Diesel",
+    )   
+    km_viaje= fields.Float(
+        related ='project_id.km_ruta',
+        string ="Kilometraje",
+    )   
+    carga_combustible= fields.Selection([
+        ('1','Grupo Serrano'),
+        ('2','Gasolinera La Loma'),
+        ('3','Otro'),],
+        string="Carga de combustible",
+    )
+    pmanager = fields.Many2one(
+        string ="Manager",
+        comodel_name='res.users',
+        default=lambda self: self.env.user.id
+    )
+    cantidad = fields.Float(
+        string ="Cantidad",
+    )          
+    precio_ruta_litro = fields.Float(
+        related="project_id.precio",
+        string="Precio ruta / litro",
+    )    
+    
+    subtotal = fields.Float(
+        compute='_compute_subtotal',
+        string="Subtotal",
+    )     
+    iva = fields.Float(
+        compute='_compute_iva',
+        string ="IVA 16%",
+    )    
+    retencion = fields.Float(
+        compute ='_compute_retencion',
+        string ="Retención 4%",
+    )   
+    total_facturar = fields.Float(
+        compute ='_compute_total_facturar',
+        string ="Total a Facturar",
+        store=True,
+    )
+    forma_pago = fields.Selection([
+        ('1','Transferencia'),
+        ('2','Efectivo'),],
+        string ="Forma de pago",
+    )
+    no_factura = fields.Many2one(
+        comodel_name='account.move',
+        ondelete='set null',
+        index=True,
+        string ="No. Factura",
+    )          
+    #no_factura = fields.Char(
+        #comodel_name='account.move',
+        #ondelete='set null',
+        #index=True,
+        #string ="No. Factura",
+    #)    
+    fecha_factura = fields.Date(
+        string ="Fecha de factura",
+    )
+    fecha_pago = fields.Date(
+        string ="Fecha pago",
+    )
+    
+    con_retencion = fields.Selection([
+        ('0','SI'),
+        ('1','NO'),],
+        string ="Con Retencion",
+        default ='0',
+    )
+    caseta_llave_1 = fields.Float(
+        related ="project_id.caseta_llave",
+        string ="Caseta IAVE",
+    )
+    caseta_efectivo_1 = fields.Float(
+        related ="project_id.caseta_efectivo",
+        string ="Caseta Efectivo",
+    )
+    
+    sale_line_id = fields.Many2one(
+        'sale.order.line',
+        string="Artículo de la orden de venta",
+        domain="[('state', '=', 'sale')]",
+    )
+    
+    total_a = fields.Monetary(
+        string="Total", 
+        compute="_compute_total_a",
+        currency_field='currency_id',
+        readonly=True
+    )
+    
+    project_id = fields.Many2one(
+        'project.project',
+    )
+    
+   # name = fields.Char(
+   #     compute="_compute_name",
+   # )
+    
+    currency_id = fields.Many2one(
+        'res.currency', 
+        string='Moneda',
+        default=lambda self: self.env.company.currency_id.id,
+        required=True,
+    )
+    
+    partner_id = fields.Many2one(
+        compute="_compute_partner"
+    )
+    
+    @api.depends('project_id.partner_id')
+    def _compute_partner(self):
+        for task in self:
+            task.partner_id = task.project_id.partner_id
+    
+    #@api.depends('project_id.name')
+    #def _compute_name(self):
+    #    for task in self:
+    #        task.name = task.project_id.name
+
+    @api.depends('sale_line_id.order_id.amount_total')
+    def _compute_total_a(self):
+        for task in self:
+            task.total_a = task.sale_line_id.order_id.amount_total
+            
+    @api.depends("cantidad", "precio_ruta_litro")
+    def _compute_subtotal(self):
+        for record in self:
+            record.subtotal = record.cantidad * record.precio_ruta_litro
+            
+    @api.depends("subtotal")
+    def _compute_iva(self):
+        for record in self:
+            record.iva = record.subtotal * 0.16
+            
+    @api.depends("con_retencion","subtotal")
+    def _compute_retencion(self):
+        for record in self:
+            if record.con_retencion == '1':
+                record.retencion = 0
+            else:
+                record.retencion = record.subtotal * 0.04
+    @api.depends("subtotal", "iva", "retencion", "cantidad", "total_facturar")
+    def _compute_total_facturar(self):
+        for record in self:
+            if record.total_facturar != 0:
+                record.total_facturar = record.total_facturar
+            else:
+                record.total_facturar = (record.subtotal + record.iva) - record.retencion
+            if record.cantidad == 0:
+                record.total_facturar = 0
+
+    @api.depends('project_id.caseta_efectivo', 'project_id.caseta_llave')
+    def _compute_gasto_total_caseta_viaje(self):
+        for record in self:
+            record.gasto_total_caseta_viaje = record.project_id.caseta_efectivo + record.project_id.caseta_llave

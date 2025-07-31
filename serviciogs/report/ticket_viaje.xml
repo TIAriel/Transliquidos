@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+  <template id="report_ticket_viaje">
+    <t t-call="web.html_container">
+      <t t-set="data_report_margin_top" t-value="12"/>
+      <t t-set="data_report_header_spacing" t-value="0"/>
+      <t t-set="data_report_dpi" t-value="110"/>
+      <t t-foreach="docs" t-as="o">
+        <t t-call="web.basic_layout">
+          <div class="page" style="max-width:100mm">
+            <div class="row">
+              <div class="col-12 text-center"><img t-att-src="image_data_uri(o.company_id.parent_id.logo)" width="120px" height="100px"/></div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 text-center font-weight-bold">
+                <span t-field="o.company_id.parent_id.name"/><br/>
+                <span t-field="o.company_id.parent_id.street"/>, 
+                <span t-field="o.company_id.parent_id.zip"/>, 
+                <span t-field="o.company_id.parent_id.city"/>, 
+                <span t-field="o.company_id.parent_id.state_id"/>, 
+                <span t-field="o.company_id.parent_id.country_id"/><br/>
+                <span t-field="o.company_id.parent_id.phone"/><br/>
+                <span t-field="o.company_id.parent_id.email"/>
+              </div>
+            </div>
+            
+            <br/>
+
+            <div class="row">
+              <div class="col-3">
+                <div class="fw-bold">FOLIO:</div> <span t-field="o.id"/>
+              </div>
+            </div>
+            
+            <br/>
+            
+            <div class="col-9">
+              <div class="fw-bold">Fecha de Creacion: </div><span t-field="o.create_date"/>
+              <br/>
+              <div class="fw-bold">Fecha de Planeada: </div><span t-field="o.date_deadline"/>
+            </div>
+
+            <br/>
+
+            <div class="row">
+              <div class="col-12 font-weight-bold" >
+                    <div class="fw-bold">Cliente:</div><span class="font-weight-normal" t-field="o.partner_id"/> 
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 font-weight-bold" >
+                    <div class="fw-bold">Conductor: </div><span class="font-weight-normal" t-field="o.conductor"/>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 font-weight-bold" >
+                <div class="fw-bold">Ruta:</div><span class="font-weight-normal" t-field="o.name"/> 
+              </div>
+            </div>
+
+            <br/>
+            <br/>
+            <br/>
+          </div>
+        </t>
+      </t>
+    </t>
+  </template>
+</odoo>
