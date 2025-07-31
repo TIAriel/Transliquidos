@@ -1,6 +1,6 @@
 {
     'name': 'Servicio Rutas',
-    'version': '17.0.0.0',
+    'version': '18.0.0.0',
     'author': 'GSerrano Lagos de Moreno',
     'website': '',
     'license': 'LGPL-3',
@@ -12,6 +12,7 @@
         "account",
         "contacts",
         "product",
+        "flota",
     ],
     'data': [
         'views/proyecto_ruta.xml',
